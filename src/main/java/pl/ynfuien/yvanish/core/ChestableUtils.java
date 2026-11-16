@@ -26,7 +26,7 @@ public class ChestableUtils {
     private static final HashMap<World, Boolean> catDetectionByWorld = new HashMap<>();
     public static void setupCatDetection(YVanish instance) {
         // I know, future-proof AF
-        Bukkit.getScheduler().runTaskAsynchronously(instance, () -> {
+        Bukkit.getAsyncScheduler().runNow(instance, (task) -> {
             final String SETTING_PATH = "entities.behavior.disable-chest-cat-detection";
 
             FileConfiguration config = Bukkit.getServer().spigot().getPaperConfig();

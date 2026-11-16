@@ -8,8 +8,8 @@ import pl.ynfuien.yvanish.commands.vanishoptions.NoMobsOption;
 import pl.ynfuien.yvanish.config.PluginConfig;
 import pl.ynfuien.yvanish.hooks.essentials.EssentialsHook;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * General class for managing vanished players.
@@ -17,7 +17,9 @@ import java.util.Set;
 public class VanishManager {
     private final YVanish instance;
     private final String seePermission;
-    private final Set<Player> vanishedPlayers = new HashSet<>();
+    // Concurrent set, because on Folia this set is modified
+    // from multiple region threads, and read from async/netty threads
+    private final Set<Player> vanishedPlayers = ConcurrentHashMap.newKeySet();
 
     public VanishManager(YVanish instance) {
         this.instance = instance;

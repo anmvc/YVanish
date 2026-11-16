@@ -29,12 +29,13 @@ public class EssentialsHook {
         // and with Essentials wanting to give a potion effect
         // to not yet spawned player, there was an error.
         // So we delay this first vanish.
-        Bukkit.getScheduler().runTaskTimer(instance, (task) -> {
+        // Player's scheduler is used, so that it works on Folia too.
+        player.getScheduler().runAtFixedRate(instance, (task) -> {
             if (!player.isOnline()) return;
 
             essentials.getUser(player).setVanished(true);
             task.cancel();
-        }, 1, 1);
+        }, () -> {}, 1, 1);
     }
 
     public static void unvanishPlayer(Player player) {

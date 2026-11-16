@@ -5,8 +5,8 @@ import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.event.EventBus;
 import net.luckperms.api.event.node.NodeAddEvent;
 import net.luckperms.api.event.node.NodeRemoveEvent;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitTask;
 import pl.ynfuien.yvanish.YVanish;
 import pl.ynfuien.yvanish.core.VanishManager;
 
@@ -14,7 +14,7 @@ import pl.ynfuien.yvanish.core.VanishManager;
 public class LuckPermsHook {
     private final YVanish instance;
     private final VanishManager vanishManager;
-    private BukkitTask schedulerTask = null;
+    private ScheduledTask schedulerTask = null;
 
     public LuckPermsHook(YVanish instance) {
         this.instance = instance;
@@ -28,10 +28,10 @@ public class LuckPermsHook {
             if (!e.getNode().getKey().contains(YVanish.Permissions.VANISH_SEE.get())) return;
 
             if (schedulerTask != null) return;
-            schedulerTask = Bukkit.getScheduler().runTaskLater(instance, () -> {
+            schedulerTask = Bukkit.getGlobalRegionScheduler().run(instance, (task) -> {
                 vanishManager.refresh();
                 schedulerTask = null;
-            }, 0);
+            });
         });
 
         eventBus.subscribe(instance, NodeRemoveEvent.class, e -> {
@@ -39,10 +39,10 @@ public class LuckPermsHook {
             if (!e.getNode().getKey().contains(YVanish.Permissions.VANISH_SEE.get())) return;
 
             if (schedulerTask != null) return;
-            schedulerTask = Bukkit.getScheduler().runTaskLater(instance, () -> {
+            schedulerTask = Bukkit.getGlobalRegionScheduler().run(instance, (task) -> {
                 vanishManager.refresh();
                 schedulerTask = null;
-            }, 0);
+            });
         });
     }
 }

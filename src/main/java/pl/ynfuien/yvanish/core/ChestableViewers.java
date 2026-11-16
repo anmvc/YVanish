@@ -17,7 +17,9 @@ import pl.ynfuien.yvanish.listeners.silentchests.PlayerInteractChestableListener
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * <b>Description of this class;
@@ -64,8 +66,10 @@ import java.util.Set;
  * </ul>
  */
 public class ChestableViewers {
-    private static final HashMap<Location, Set<Player>> blocksViewers = new HashMap<>();
-    private static final HashMap<Pair<Player, Block>, ScheduledTask> removeSchedulers = new HashMap<>();
+    // ConcurrentHashMaps, because on Folia viewers are added/removed
+    // from multiple region threads, and read from packet (netty) threads
+    private static final Map<Location, Set<Player>> blocksViewers = new ConcurrentHashMap<>();
+    private static final Map<Pair<Player, Block>, ScheduledTask> removeSchedulers = new ConcurrentHashMap<>();
 
     public static Set<Player> getBlockViewers(Block block) {
         return getBlockViewers(block.getLocation());
@@ -114,8 +118,7 @@ public class ChestableViewers {
     }
 
     private static void addViewer(Location location, Player player) {
-        if (!blocksViewers.containsKey(location)) blocksViewers.put(location, new HashSet<>());
-        Set<Player> blockViewers = blocksViewers.get(location);
+        Set<Player> blockViewers = blocksViewers.computeIfAbsent(location, (k) -> ConcurrentHashMap.newKeySet());
 
         blockViewers.add(player);
     }

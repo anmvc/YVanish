@@ -30,7 +30,7 @@ public class VanishToggleListener implements Listener {
         if (!user.getFakeJoin()) return;
 
         // Scheduled task to broadcast the message after a "Vanish enabled/disabled" message
-        Bukkit.getScheduler().runTask(instance, () -> {
+        Bukkit.getGlobalRegionScheduler().run(instance, (task) -> {
             HashMap<String, Object> placeholders = new HashMap<>();
             placeholders.put("username", p.getName());
             placeholders.put("uuid", p.getUniqueId());

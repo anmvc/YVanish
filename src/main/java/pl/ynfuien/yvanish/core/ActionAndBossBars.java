@@ -4,22 +4,26 @@ import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import pl.ynfuien.ydevlib.messages.colors.ColorFormatter;
 import pl.ynfuien.yvanish.YVanish;
 import pl.ynfuien.yvanish.config.PluginConfig;
 import pl.ynfuien.yvanish.data.Storage;
 import pl.ynfuien.yvanish.data.User;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ActionAndBossBars {
     private static YVanish instance;
     private static VanishManager vanishManager;
 
-    private static BukkitTask actionBarInterval = null;
-    private static BukkitTask bossBarInterval = null;
-    private static final HashMap<Player, BossBar> playerBossBars = new HashMap<>();
+    private static ScheduledTask actionBarInterval = null;
+    private static ScheduledTask bossBarInterval = null;
+    // ConcurrentHashMap, because intervals run asynchronously,
+    // while show/hide can be also called from region threads
+    private static final Map<Player, BossBar> playerBossBars = new ConcurrentHashMap<>();
 
     public static void setup(YVanish instance) {
         ActionAndBossBars.instance = instance;
@@ -27,12 +31,12 @@ public class ActionAndBossBars {
     }
 
     public static void startIntervals() {
-        // Action bar
-        actionBarInterval = Bukkit.getScheduler().runTaskTimerAsynchronously(instance, () -> {
+        // 1 tick = 50ms
+        actionBarInterval = Bukkit.getAsyncScheduler().runAtFixedRate(instance, (task) -> {
             if (vanishManager.isNoOneVanished()) return;
 
             for (Player p : vanishManager.getVanishedPlayers()) sendActionBar(p);
-        }, 2, PluginConfig.actionBarRefreshRate);
+        }, 100, PluginConfig.actionBarRefreshRate * 50L, TimeUnit.MILLISECONDS);
 
 
         // Boss bar
@@ -44,11 +48,11 @@ public class ActionAndBossBars {
             return;
         }
 
-        bossBarInterval = Bukkit.getScheduler().runTaskTimerAsynchronously(instance, () -> {
+        bossBarInterval = Bukkit.getAsyncScheduler().runAtFixedRate(instance, (task) -> {
             if (vanishManager.isNoOneVanished()) return;
 
             for (Player p : vanishManager.getVanishedPlayers()) showBossBar(p);
-        }, 2, rate);
+        }, 100, rate * 50L, TimeUnit.MILLISECONDS);
     }
 
     public static void stopIntervals() {

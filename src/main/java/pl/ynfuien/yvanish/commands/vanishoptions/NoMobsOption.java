@@ -4,6 +4,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
+import pl.ynfuien.yvanish.YVanish;
 import pl.ynfuien.yvanish.data.Storage;
 import pl.ynfuien.yvanish.data.User;
 import pl.ynfuien.yvanish.utils.Lang;
@@ -41,16 +42,26 @@ public class NoMobsOption extends VanishOption {
     public static void clearMobsTarget(Player player) {
         if (!Storage.getUser(player.getUniqueId()).getNoMobs()) return;
 
+        YVanish plugin = YVanish.getInstance();
+
         int range = 256;
-        List<Entity> nearby = player.getNearbyEntities(range, range, range);
-        for (Entity entity : nearby) {
-            if (!(entity instanceof Mob mob)) continue;
+        // Player's scheduler is used, so that nearby entities
+        // are accessed on the region the player is in (Folia)
+        player.getScheduler().run(plugin, (task) -> {
+            List<Entity> nearby = player.getNearbyEntities(range, range, range);
+            for (Entity entity : nearby) {
+                if (!(entity instanceof Mob mob)) continue;
 
-            LivingEntity target = mob.getTarget();
-            if (target == null) continue;
+                // Mob's scheduler is used, so that its target
+                // is accessed on the region the mob is in (Folia)
+                mob.getScheduler().run(plugin, (t) -> {
+                    LivingEntity target = mob.getTarget();
+                    if (target == null) return;
 
-            if (!target.equals(player)) continue;
-            mob.setTarget(null);
-        }
+                    if (!target.equals(player)) return;
+                    mob.setTarget(null);
+                }, () -> {});
+            }
+        }, () -> {});
     }
 }

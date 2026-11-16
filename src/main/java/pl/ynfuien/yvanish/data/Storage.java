@@ -5,12 +5,16 @@ import org.jetbrains.annotations.NotNull;
 import pl.ynfuien.yvanish.YVanish;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Storage {
     private static YVanish instance;
     private static Database database;
-    private static HashMap<UUID, User> users = new HashMap<>();
+    // ConcurrentHashMap, because users are cached/retrieved
+    // from multiple region and netty threads
+    private static final Map<UUID, User> users = new ConcurrentHashMap<>();
 
     public static void setup(YVanish instance) {
         Storage.instance = instance;
@@ -32,7 +36,7 @@ public class Storage {
         updateUser(uuid, getUser(uuid));
     }
     public static void updateUser(@NotNull UUID uuid, User user) {
-        Bukkit.getScheduler().runTaskAsynchronously(instance, () -> {
+        Bukkit.getAsyncScheduler().runNow(instance, (task) -> {
             database.setUser(uuid, user);
         });
     }
@@ -42,7 +46,7 @@ public class Storage {
     }
 
     public static HashMap<UUID, User> getUsers() {
-        return users;
+        return new HashMap<>(users);
     }
 
     public static Database getDatabase() {

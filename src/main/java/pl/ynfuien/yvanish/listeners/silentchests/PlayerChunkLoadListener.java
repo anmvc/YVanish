@@ -50,8 +50,11 @@ public class PlayerChunkLoadListener implements Listener {
         Set<Location> viewedLocations = ChestableViewers.getViewedLocations();
         Set<Block> sentCorrections = new HashSet<>();
         for (Location loc : viewedLocations) {
-//            if (!loc.isChunkLoaded()) continue;
-            if (!loc.getChunk().equals(chunk)) continue;
+            // Check chunk coordinates with plain math first, so
+            // that chunks aren't loaded/accessed cross-region (Folia)
+            if (loc.getWorld() != chunk.getWorld()) continue;
+            if ((loc.getBlockX() >> 4) != chunk.getX()) continue;
+            if ((loc.getBlockZ() >> 4) != chunk.getZ()) continue;
 
             Block block = loc.getBlock();
             if (sentCorrections.contains(block)) continue;

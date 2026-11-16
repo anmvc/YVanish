@@ -14,14 +14,16 @@ import pl.ynfuien.yvanish.data.Storage;
 import pl.ynfuien.yvanish.data.User;
 import pl.ynfuien.yvanish.utils.Lang;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PlayerJoinListener implements Listener {
     private final YVanish instance;
     private final VanishManager vanishManager;
-    private final static Set<UUID> freshlyJoined = new HashSet<>();
+    // Concurrent set, because it's written to in the login threads,
+    // and read from region and packet (netty) threads
+    private final static Set<UUID> freshlyJoined = ConcurrentHashMap.newKeySet();
 
     public PlayerJoinListener(YVanish instance) {
         this.instance = instance;
